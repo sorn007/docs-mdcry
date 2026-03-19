@@ -4,6 +4,7 @@ FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
 RUN npm ci --omit=dev
 
 FROM node:20-bookworm-slim AS build
