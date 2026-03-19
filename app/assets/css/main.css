@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme static {
+  --font-sans: 'Public Sans', sans-serif;
+
+  --color-green-50: #EFFDF5;
+  --color-green-100: #D9FBE8;
+  --color-green-200: #B3F5D1;
+  --color-green-300: #75EDAE;
+  --color-green-400: #00DC82;
+  --color-green-500: #00C16A;
+  --color-green-600: #00A155;
+  --color-green-700: #007F45;
+  --color-green-800: #016538;
+  --color-green-900: #0A5331;
+  --color-green-950: #052E16;
+}
+
+@layer base {
+  .md h1 { font-size: 1.75rem; font-weight: 700; margin: 1.25rem 0 0.75rem; }
+  .md h2 { font-size: 1.375rem; font-weight: 700; margin: 1.25rem 0 0.5rem; }
+  .md h3 { font-size: 1.125rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+  .md h1[id], .md h2[id], .md h3[id], .md h4[id], .md h5[id], .md h6[id] { scroll-margin-top: 6rem; }
+  .md h1[id]:focus, .md h2[id]:focus, .md h3[id]:focus, .md h4[id]:focus, .md h5[id]:focus, .md h6[id]:focus {
+    outline: 2px solid color-mix(in oklab, var(--ui-primary) 70%, white);
+    outline-offset: 3px;
+    border-radius: 0.25rem;
+  }
+  .md p { margin: 0.75rem 0; line-height: 1.7; }
+  .md ul { margin: 0.75rem 0 0.75rem 1.25rem; list-style: disc; }
+  .md ol { margin: 0.75rem 0 0.75rem 1.25rem; list-style: decimal; }
+  .md li { margin: 0.25rem 0; }
+  .md a { text-decoration: underline; text-underline-offset: 2px; }
+  .md code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.9em; }
+  .md pre { overflow: auto; padding: 0.9rem 1rem; border-radius: 0.75rem; background: color-mix(in oklab, var(--ui-bg) 92%, black); }
+  .dark .md pre { background: color-mix(in oklab, var(--ui-bg) 85%, black); }
+  .md blockquote { border-left: 3px solid color-mix(in oklab, var(--ui-border) 80%, black); padding-left: 0.75rem; color: color-mix(in oklab, var(--ui-text) 70%, black); margin: 0.75rem 0; }
+  .md table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  .md th, .md td { border: 1px solid color-mix(in oklab, var(--ui-border) 85%, black); padding: 0.5rem 0.6rem; }
+  .md th { background: color-mix(in oklab, var(--ui-bg) 90%, black); text-align: left; }
+}

@@ -1,0 +1,13 @@
+[config]
+# ให้ AI ทำ 2 อย่างนี้อัตโนมัติเมื่อมีการเปิด PR
+pr_commands = [
+    "/describe", # ให้ AI เขียนสรุปรายละเอียด PR
+    "/review"    # ให้ AI ตรวจหาบั๊กและประเมินคุณภาพโค้ด
+]
+ignore_pr_title = ["WIP", "Draft", "[Draft]"] 
+ignore_pr_files = ["package-lock.json", "yarn.lock", "dist/*", "build/*"]
+
+[pr_reviewer]
+# สั่งให้ AI รีวิวและอธิบายเป็นภาษาไทย
+extra_instructions = "Please explain the review and suggestions in Thai language. Focus on identifying potential bugs, unhandled null values, and security issues."
+inline_code_comments = true
