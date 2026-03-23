@@ -1,7 +1,18 @@
-import { PrismaClient } from '@prisma/client'
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { createRequire } from 'node:module'
 
-let prismaSingleton: PrismaClient | undefined
+/**
+ * Nitro output is ESM; @prisma/client is CommonJS. Rollup may rewrite
+ * `import pkg from '@prisma/client'` into a broken named ESM import.
+ * Loading via `require()` avoids any ESM/CJS interop issues at runtime.
+ */
+const require = createRequire(import.meta.url)
+const prismaMod = require('@prisma/client') as typeof import('@prisma/client')
+const adapterMod = require('@prisma/adapter-better-sqlite3') as typeof import('@prisma/adapter-better-sqlite3')
+
+const { PrismaClient } = prismaMod
+const { PrismaBetterSqlite3 } = adapterMod
+
+let prismaSingleton: InstanceType<typeof PrismaClient> | undefined
 
 export function prisma() {
   if (!prismaSingleton) {

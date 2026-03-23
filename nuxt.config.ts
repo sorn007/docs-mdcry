@@ -27,6 +27,16 @@ export default defineNuxtConfig({
     }
   },
 
+  nitro: {
+    externals: {
+      external: [
+        '@prisma/client',
+        '@prisma/adapter-better-sqlite3',
+        'better-sqlite3'
+      ]
+    }
+  },
+
   typescript: {
     tsConfig: {
       vueCompilerOptions: {
