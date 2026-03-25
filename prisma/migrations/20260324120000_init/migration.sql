@@ -1,51 +1,63 @@
+-- Note: no CREATE SCHEMA "public" — it requires CREATE ON DATABASE; public exists by default.
+-- CreateEnum
+CREATE TYPE "PublicScopeType" AS ENUM ('file', 'folder');
+
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Session" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "tokenHash" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expiresAt" DATETIME NOT NULL,
-    CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "DocIndex" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "versionHash" TEXT NOT NULL,
     "treeJson" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "DocIndex_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "PublicLink" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "tokenHash" TEXT NOT NULL,
     "passwordHash" TEXT,
-    "scopeType" TEXT NOT NULL,
+    "scopeType" "PublicScopeType" NOT NULL,
     "scopeKey" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expiresAt" DATETIME,
-    "revokedAt" DATETIME,
-    "lastAccessAt" DATETIME
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3),
+    "revokedAt" TIMESTAMP(3),
+    "lastAccessAt" TIMESTAMP(3),
+
+    CONSTRAINT "PublicLink_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "PublicLinkAccessLog" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "publicLinkId" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "ipHash" TEXT,
     "userAgent" TEXT,
-    CONSTRAINT "PublicLinkAccessLog_publicLinkId_fkey" FOREIGN KEY ("publicLinkId") REFERENCES "PublicLink" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "PublicLinkAccessLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -77,3 +89,9 @@ CREATE INDEX "PublicLinkAccessLog_publicLinkId_idx" ON "PublicLinkAccessLog"("pu
 
 -- CreateIndex
 CREATE INDEX "PublicLinkAccessLog_createdAt_idx" ON "PublicLinkAccessLog"("createdAt");
+
+-- AddForeignKey
+ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PublicLinkAccessLog" ADD CONSTRAINT "PublicLinkAccessLog_publicLinkId_fkey" FOREIGN KEY ("publicLinkId") REFERENCES "PublicLink"("id") ON DELETE CASCADE ON UPDATE CASCADE;

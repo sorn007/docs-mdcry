@@ -31,8 +31,8 @@ export default defineNuxtConfig({
     externals: {
       external: [
         '@prisma/client',
-        '@prisma/adapter-better-sqlite3',
-        'better-sqlite3'
+        '@prisma/adapter-pg',
+        'pg'
       ]
     }
   },

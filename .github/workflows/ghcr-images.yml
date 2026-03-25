@@ -40,6 +40,7 @@ jobs:
             type=ref,event=tag
             type=sha,format=short
 
+      # Dockerfile sets DATABASE_URL for prisma generate during build (no live DB required).
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:

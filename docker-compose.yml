@@ -3,13 +3,13 @@ services:
     image: ${GHCR_IMAGE:-ghcr.io/OWNER/REPO}:${GHCR_TAG:-latest}
     container_name: mdcry
     restart: unless-stopped
+
     ports:
       - "3000:3000"
     env_file:
       - .env
     environment:
-      # Store SQLite on a persistent volume (not inside container FS)
-      DATABASE_URL: "file:/data/dev.db"
-    volumes:
-      - ./data:/data
+      DATABASE_URL: ${DATABASE_URL:-postgresql://mdcry:mdcry@postgres:5432/mdcry}
 
+volumes:
+  pgdata:

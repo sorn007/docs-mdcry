@@ -23,19 +23,6 @@ async function onLogin() {
     busy.value = false
   }
 }
-
-async function onBootstrap() {
-  error.value = null
-  busy.value = true
-  try {
-    await auth.bootstrap()
-    await navigateTo('/')
-  } catch (e: any) {
-    error.value = e?.data?.statusMessage || e?.statusMessage || 'Bootstrap failed'
-  } finally {
-    busy.value = false
-  }
-}
 </script>
 
 <template>
@@ -66,12 +53,9 @@ async function onBootstrap() {
 
         <UAlert v-if="error" color="error" variant="soft" :title="error" />
 
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex justify-end">
           <UButton type="submit" color="primary" :loading="busy">
             Login
-          </UButton>
-          <UButton type="button" color="neutral" variant="soft" :loading="busy" @click="onBootstrap">
-            Bootstrap owner
           </UButton>
         </div>
       </UForm>

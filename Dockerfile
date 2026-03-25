@@ -15,7 +15,8 @@ RUN npm ci
 
 COPY . .
 # Prisma CLI is a devDependency; generate client into node_modules before Nitro bundles.
-ENV DATABASE_URL="file:./prisma/dev.db"
+# Dummy URL for generate only (no live DB required).
+ENV DATABASE_URL="postgresql://prisma:prisma@127.0.0.1:5432/prisma"
 RUN npx prisma generate
 
 RUN npm run build
@@ -24,7 +25,7 @@ FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Runtime deps (includes better-sqlite3, prisma client runtime, etc.)
+# Runtime deps (pg, prisma client runtime, etc.)
 COPY --from=deps /app/node_modules ./node_modules
 
 # Generated Prisma engine + client (deps stage never runs `prisma generate`)
@@ -35,6 +36,6 @@ COPY --from=build /app/.output ./.output
 
 EXPOSE 3000
 
-# NOTE: expects DATABASE_URL in env, e.g. file:/data/dev.db
+# NOTE: set DATABASE_URL to your PostgreSQL connection string at runtime
 CMD ["node", ".output/server/index.mjs"]
 

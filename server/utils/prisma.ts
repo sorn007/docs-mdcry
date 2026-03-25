@@ -12,18 +12,25 @@ import { join } from 'node:path'
  */
 const require = createRequire(join(process.cwd(), 'node_modules/@prisma/client/package.json'))
 const prismaMod = require('@prisma/client') as typeof import('@prisma/client')
-const adapterMod = require('@prisma/adapter-better-sqlite3') as typeof import('@prisma/adapter-better-sqlite3')
+const adapterMod = require('@prisma/adapter-pg') as typeof import('@prisma/adapter-pg')
+const pgMod = require('pg') as typeof import('pg')
 
 const { PrismaClient } = prismaMod
-const { PrismaBetterSqlite3 } = adapterMod
+const { PrismaPg } = adapterMod
+const { Pool } = pgMod
 
+let poolSingleton: InstanceType<typeof Pool> | undefined
 let prismaSingleton: InstanceType<typeof PrismaClient> | undefined
 
 export function prisma() {
   if (!prismaSingleton) {
     const url = process.env.DATABASE_URL
     if (!url) throw new Error('DATABASE_URL is required')
-    const adapter = new PrismaBetterSqlite3({ url })
+    if (!poolSingleton) {
+      poolSingleton = new Pool({ connectionString: url })
+    }
+    // @types/pg vs adapter's pg typings can disagree; Pool instance is valid at runtime.
+    const adapter = new PrismaPg(poolSingleton as never)
     prismaSingleton = new PrismaClient({ adapter })
   }
   return prismaSingleton

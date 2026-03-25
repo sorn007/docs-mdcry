@@ -17,17 +17,12 @@ export function useAuth() {
     await refresh()
   }
 
-  async function bootstrap() {
-    await $fetch('/api/auth/bootstrap', { method: 'POST' })
-    await refresh()
-  }
-
   async function logout() {
     await $fetch('/api/auth/logout', { method: 'POST' })
     user.value = null
     loaded.value = true
   }
 
-  return { user, loaded, refresh, login, bootstrap, logout }
+  return { user, loaded, refresh, login, logout }
 }
 
