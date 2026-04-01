@@ -18,6 +18,7 @@ const toast = useToast()
 
 const tree = ref<DocTree | null>(null)
 const links = ref<PublicLinkRow[]>([])
+const linkUrls = ref<Record<string, string>>({})
 const loading = ref(false)
 const selectedNode = ref<DocTreeNode | null>(null)
 
@@ -71,12 +72,28 @@ async function createLink() {
       }
     })
     await refreshLinks()
+    linkUrls.value[res.id] = res.url
     toast.add({ title: 'Public link created', description: res.url })
     createForm.password = ''
     createForm.expiresAt = ''
   } finally {
     loading.value = false
   }
+}
+
+async function copyLink(id: string) {
+  let url = linkUrls.value[id]
+  if (!url) {
+    const res = await $fetch<{ id: string, url: string }>('/api/public-links/reissue', {
+      method: 'POST',
+      body: { id }
+    })
+    url = res.url
+    linkUrls.value[id] = res.url
+  }
+  const absolute = new URL(url, window.location.origin).toString()
+  await navigator.clipboard.writeText(absolute)
+  toast.add({ title: 'Copied public link' })
 }
 
 async function revoke(id: string) {
@@ -190,8 +207,21 @@ onMounted(async () => {
                     <span v-if="l.expiresAt"> • expires {{ l.expiresAt }}</span>
                     <span v-if="l.revokedAt"> • revoked</span>
                   </div>
+                  <div v-if="linkUrls[l.id]" class="text-xs mt-1 break-all text-primary">
+                    {{ linkUrls[l.id] }}
+                  </div>
                 </div>
                 <div class="flex items-center gap-2">
+                  <UButton
+                    v-if="!l.revokedAt"
+                    size="xs"
+                    color="neutral"
+                    variant="soft"
+                    icon="i-lucide-copy"
+                    @click="copyLink(l.id)"
+                  >
+                    Copy link
+                  </UButton>
                   <UButton
                     v-if="!l.revokedAt"
                     size="xs"

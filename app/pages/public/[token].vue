@@ -17,10 +17,11 @@ const key = computed(() => typeof route.query.key === 'string' ? route.query.key
 
 const password = ref('')
 const passwordNeeded = ref(false)
+const passwordSubmitted = ref(false)
 
 function authHeaders() {
   const headers: Record<string, string> = {}
-  if (password.value) headers['x-public-password'] = password.value
+  if (passwordSubmitted.value && password.value) headers['x-public-password'] = password.value
   return headers
 }
 
@@ -62,6 +63,12 @@ async function refresh() {
   error.value = null
   try {
     await loadInfo()
+    if (passwordNeeded.value && !passwordSubmitted.value) {
+      html.value = ''
+      docKey.value = ''
+      tree.value = null
+      return
+    }
     await loadTree()
     const target = key.value || docKey.value
     if (target) await loadDoc(target)
@@ -73,9 +80,18 @@ async function refresh() {
 }
 
 watch(() => [token.value, key.value], () => refresh(), { immediate: true })
+watch(() => token.value, () => {
+  passwordSubmitted.value = false
+  password.value = ''
+})
 
 function openKey(k: string) {
   navigateTo({ path: `/public/${encodeURIComponent(token.value)}`, query: { key: k } })
+}
+
+async function submitPassword() {
+  passwordSubmitted.value = true
+  await refresh()
 }
 </script>
 
@@ -97,13 +113,13 @@ function openKey(k: string) {
       <UContainer class="py-6">
         <UAlert v-if="error" color="error" variant="soft" :title="error" />
 
-        <UCard v-if="passwordNeeded && !password" class="max-w-lg mx-auto">
+        <UCard v-if="passwordNeeded && !passwordSubmitted" class="max-w-lg mx-auto">
           <template #header>
             <div class="font-semibold">Password required</div>
           </template>
           <div class="space-y-3">
             <UInput v-model="password" type="password" placeholder="Enter password" />
-            <UButton :loading="loading" @click="refresh">
+            <UButton :loading="loading" @click="submitPassword">
               Continue
             </UButton>
           </div>

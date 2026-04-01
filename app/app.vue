@@ -40,10 +40,11 @@ async function handleLogout() {
     <UHeader v-if="showShell">
       <template #left>
         <NuxtLink to="/">
-          <AppLogo class="w-auto h-6 shrink-0" />
+          <AppLogo class="w-auto h-8 shrink-0" />
         </NuxtLink>
         <UButton to="/" variant="ghost" color="neutral" size="sm">Docs</UButton>
         <UButton to="/admin" variant="ghost" color="neutral" size="sm">Admin</UButton>
+        <UButton to="/account" variant="ghost" color="neutral" size="sm">Account</UButton>
       </template>
 
       <template #right>
