@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
   return {
     links: links.map(l => ({
       id: l.id,
+      url: l.token ? `/public/${encodeURIComponent(l.token)}` : null,
       scopeType: l.scopeType,
       scopeKey: l.scopeKey,
       createdAt: l.createdAt,

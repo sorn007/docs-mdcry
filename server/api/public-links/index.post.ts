@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
   const db = prisma()
   const link = await db.publicLink.create({
     data: {
+      token,
       tokenHash,
       passwordHash: password ? await hashLinkPassword(password) : null,
       scopeType,

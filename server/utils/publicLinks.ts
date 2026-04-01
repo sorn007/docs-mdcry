@@ -44,7 +44,11 @@ export function assertKeyInScope(scopeType: 'file' | 'folder', scopeKey: string,
 export async function resolvePublicLinkOrThrow(token: string) {
   const db = prisma()
   const tokenHash = hashToken(token)
-  const link = await db.publicLink.findFirst({ where: { tokenHash } })
+  const link = await db.publicLink.findFirst({
+    where: {
+      OR: [{ token }, { tokenHash }]
+    }
+  })
   if (!link) throw createError({ statusCode: 404, statusMessage: 'Link not found' })
   if (link.revokedAt) throw createError({ statusCode: 410, statusMessage: 'Link revoked' })
   if (link.expiresAt && link.expiresAt <= new Date()) throw createError({ statusCode: 410, statusMessage: 'Link expired' })

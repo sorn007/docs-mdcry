@@ -46,6 +46,7 @@ model DocIndex {
 
 model PublicLink {
   id           String          @id @default(cuid())
+  token        String?         @unique
   tokenHash    String          @unique
   passwordHash String?
   scopeType    PublicScopeType

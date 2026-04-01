@@ -6,6 +6,7 @@ type DocTree = { rootPrefix: string, projects: DocTreeNode[] }
 
 type PublicLinkRow = {
   id: string
+  url: string | null
   scopeType: 'file' | 'folder'
   scopeKey: string
   createdAt: string
@@ -18,7 +19,6 @@ const toast = useToast()
 
 const tree = ref<DocTree | null>(null)
 const links = ref<PublicLinkRow[]>([])
-const linkUrls = ref<Record<string, string>>({})
 const loading = ref(false)
 const selectedNode = ref<DocTreeNode | null>(null)
 
@@ -72,7 +72,6 @@ async function createLink() {
       }
     })
     await refreshLinks()
-    linkUrls.value[res.id] = res.url
     toast.add({ title: 'Public link created', description: res.url })
     createForm.password = ''
     createForm.expiresAt = ''
@@ -82,18 +81,20 @@ async function createLink() {
 }
 
 async function copyLink(id: string) {
-  let url = linkUrls.value[id]
+  const row = links.value.find(l => l.id === id)
+  const url = row?.url
   if (!url) {
-    const res = await $fetch<{ id: string, url: string }>('/api/public-links/reissue', {
-      method: 'POST',
-      body: { id }
-    })
-    url = res.url
-    linkUrls.value[id] = res.url
+    toast.add({ title: 'Link URL unavailable (created before update)', color: 'warning' })
+    return
   }
   const absolute = new URL(url, window.location.origin).toString()
   await navigator.clipboard.writeText(absolute)
   toast.add({ title: 'Copied public link' })
+}
+
+function toAbsoluteUrl(url: string | null) {
+  if (!url || !import.meta.client) return ''
+  return new URL(url, window.location.origin).toString()
 }
 
 async function revoke(id: string) {
@@ -207,8 +208,8 @@ onMounted(async () => {
                     <span v-if="l.expiresAt"> • expires {{ l.expiresAt }}</span>
                     <span v-if="l.revokedAt"> • revoked</span>
                   </div>
-                  <div v-if="linkUrls[l.id]" class="text-xs mt-1 break-all text-primary">
-                    {{ linkUrls[l.id] }}
+                  <div v-if="l.url" class="text-xs mt-1 break-all text-primary">
+                    {{ toAbsoluteUrl(l.url) }}
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
