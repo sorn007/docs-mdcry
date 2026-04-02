@@ -33,6 +33,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const markdownRoot = ref<HTMLElement | null>(null)
 const { focusFromHash } = useMarkdownHashFocus(markdownRoot)
+useMermaidDiagrams(markdownRoot, html)
 
 async function loadInfo() {
   info.value = await $fetch<PublicInfo>('/api/public/info', { query: { token: token.value } })

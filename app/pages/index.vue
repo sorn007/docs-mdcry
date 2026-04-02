@@ -15,6 +15,7 @@ const error = ref<string | null>(null)
 const search = ref('')
 const markdownRoot = ref<HTMLElement | null>(null)
 const { focusFromHash } = useMarkdownHashFocus(markdownRoot)
+useMermaidDiagrams(markdownRoot, html)
 
 async function fetchTree() {
   loadingTree.value = true
