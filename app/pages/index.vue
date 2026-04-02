@@ -16,6 +16,7 @@ const search = ref('')
 const markdownRoot = ref<HTMLElement | null>(null)
 const { focusFromHash } = useMarkdownHashFocus(markdownRoot)
 useMermaidDiagrams(markdownRoot, html)
+const { isFocusMode, toggleFocus } = useReaderFocusLayout()
 
 async function fetchTree() {
   loadingTree.value = true
@@ -73,7 +74,7 @@ onMounted(fetchTree)
 <template>
   <UContainer class="py-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <UCard class="lg:col-span-4">
+      <UCard :class="isFocusMode ? 'lg:col-span-3' : 'lg:col-span-4'">
         <template #header>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
@@ -116,21 +117,33 @@ onMounted(fetchTree)
         </div>
       </UCard>
 
-      <UCard class="lg:col-span-8">
+      <UCard :class="isFocusMode ? 'lg:col-span-9' : 'lg:col-span-8'">
         <template #header>
           <div class="flex items-center justify-between gap-3">
             <div class="font-semibold truncate">
               {{ docKey || 'Select a file' }}
             </div>
-            <UButton
-              v-if="docKey"
-              size="xs"
-              color="neutral"
-              variant="soft"
-              :to="`/view?key=${encodeURIComponent(docKey)}`"
-            >
-              Open
-            </UButton>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="soft"
+                :icon="isFocusMode ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
+                :aria-pressed="isFocusMode"
+                :aria-label="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
+                :title="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
+                @click="toggleFocus"
+              />
+              <UButton
+                v-if="docKey"
+                size="xs"
+                color="neutral"
+                variant="soft"
+                :to="`/view?key=${encodeURIComponent(docKey)}`"
+              >
+                Open
+              </UButton>
+            </div>
           </div>
         </template>
 

@@ -34,6 +34,7 @@ const error = ref<string | null>(null)
 const markdownRoot = ref<HTMLElement | null>(null)
 const { focusFromHash } = useMarkdownHashFocus(markdownRoot)
 useMermaidDiagrams(markdownRoot, html)
+const { isFocusMode, toggleFocus } = useReaderFocusLayout()
 
 async function loadInfo() {
   info.value = await $fetch<PublicInfo>('/api/public/info', { query: { token: token.value } })
@@ -127,7 +128,7 @@ async function submitPassword() {
         </UCard>
 
         <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <UCard class="lg:col-span-4">
+          <UCard :class="isFocusMode ? 'lg:col-span-3' : 'lg:col-span-4'">
             <template #header>
               <div class="flex items-center justify-between">
                 <div class="font-semibold">Files</div>
@@ -161,12 +162,23 @@ async function submitPassword() {
             </div>
           </UCard>
 
-          <UCard class="lg:col-span-8">
+          <UCard :class="isFocusMode ? 'lg:col-span-9' : 'lg:col-span-8'">
             <template #header>
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between gap-3">
                 <div class="font-semibold truncate">
                   {{ docKey || 'Select a file' }}
                 </div>
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="soft"
+                  :icon="isFocusMode ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
+                  :aria-pressed="isFocusMode"
+                  :aria-label="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
+                  :title="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
+                  class="shrink-0"
+                  @click="toggleFocus"
+                />
               </div>
             </template>
 
