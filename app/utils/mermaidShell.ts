@@ -2,9 +2,13 @@
  * Wraps rendered Mermaid SVG with zoom / pan / fullscreen controls (vanilla DOM).
  */
 
-const MIN_SCALE = 0.25
+/** ขั้นต่ำตอนซูมด้วยล้อ/ปุ่ม — ต่ำพอให้ scale หลัง fit (อาจ < 0.25) ไม่กระโดดเมื่อกดย่อ */
+const MIN_SCALE = 0.05
 const MAX_SCALE = 4
 const ZOOM_STEP = 0.15
+
+/** ระยะห่างจากขอบ viewport ตอนคำนวณ fit (ทุกด้าน) */
+const FIT_VIEWPORT_PADDING_PX = 14
 
 let fullscreenListenerAttached = false
 
@@ -47,6 +51,26 @@ function wireMermaidControls(shell: HTMLElement) {
 
   const panBtn = shell.querySelector<HTMLButtonElement>('[data-action="pan-toggle"]')
 
+  /**
+   * ค่าเริ่มต้น / รีเซ็ต: ย่อ-ขยายให้ทั้งไดอะแกรมอยู่ใน viewport แล้วจัดกึ่งกลาง (ภาพรวม)
+   * ไม่ล็อก scale=1 — ใช้ scale ตามขนาดจริงของ SVG กับพื้นที่ว่าง
+   */
+  function fitDiagramToViewport() {
+    cv!.style.removeProperty('transform')
+    void cv!.offsetWidth
+    const vw = vp!.clientWidth
+    const vh = vp!.clientHeight
+    const cw = cv!.offsetWidth
+    const ch = cv!.offsetHeight
+    if (vw <= 0 || vh <= 0 || cw <= 0 || ch <= 0) return
+
+    const aw = Math.max(1, vw - FIT_VIEWPORT_PADDING_PX * 2)
+    const ah = Math.max(1, vh - FIT_VIEWPORT_PADDING_PX * 2)
+    scale = Math.min(aw / cw, ah / ch)
+    tx = (vw - scale * cw) / 2
+    ty = (vh - scale * ch) / 2
+  }
+
   function applyTransform() {
     const rtx = Math.round(tx)
     const rty = Math.round(ty)
@@ -76,9 +100,7 @@ function wireMermaidControls(shell: HTMLElement) {
       scale = Math.max(MIN_SCALE, scale - ZOOM_STEP)
       applyTransform()
     } else if (action === 'reset') {
-      scale = 1
-      tx = 0
-      ty = 0
+      fitDiagramToViewport()
       applyTransform()
     } else if (action === 'pan-toggle') {
       setPanMode(!panMode)
@@ -172,7 +194,14 @@ function wireMermaidControls(shell: HTMLElement) {
     { passive: true }
   )
 
-  applyTransform()
+  function layoutInitialFit() {
+    fitDiagramToViewport()
+    applyTransform()
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(layoutInitialFit)
+  })
 }
 
 export function buildMermaidShell(
@@ -191,7 +220,7 @@ export function buildMermaidShell(
   const buttons: { action: string, title: string, text: string }[] = [
     { action: 'zoom-in', title: 'ขยาย', text: '+' },
     { action: 'zoom-out', title: 'ย่อ', text: '−' },
-    { action: 'reset', title: 'รีเซ็ตมุมมอง', text: '⌂' },
+    { action: 'reset', title: 'พอดีกับกรอบ (ภาพรวม)', text: '⌂' },
     { action: 'pan-toggle', title: 'โหมดลาก (มือจับ)', text: '✋' },
     { action: 'fullscreen', title: 'เต็มจอ', text: '⛶' }
   ]
