@@ -75,3 +75,12 @@ export async function logout(event: H3Event) {
   deleteCookie(event, SESSION_COOKIE, { path: '/' })
 }
 
+/** After password change: invalidate other sessions; current cookie stays valid. */
+export async function deleteOtherSessionsForUser(event: H3Event, userId: string) {
+  const token = getCookie(event, SESSION_COOKIE)
+  if (!token) return
+  const tokenHash = sha256(token)
+  const db = prisma()
+  await db.session.deleteMany({ where: { userId, NOT: { tokenHash } } })
+}
+

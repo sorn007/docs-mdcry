@@ -1,8 +1,13 @@
 import { getHeader, createError } from 'h3'
 import type { H3Event } from 'h3'
+import { useRuntimeConfig } from '#imports'
+
+type NitroNodeEvent = H3Event & {
+  node?: { req?: { socket?: { remoteAddress?: string } } }
+}
 
 /** In-memory rate limit store. For multi-instance deploy use Redis or similar. */
-const store = new Map<string, { count: number; resetAt: number }>()
+const store = new Map<string, { count: number, resetAt: number }>()
 
 const CLEANUP_INTERVAL_MS = 60_000
 let cleanupTimer: ReturnType<typeof setInterval> | null = null
@@ -22,17 +27,30 @@ function ensureCleanup(): void {
 }
 
 /**
- * Get client IP from request (supports X-Forwarded-For behind proxy).
+ * Client IP for rate limiting. By default uses the direct socket address only
+ * (X-Forwarded-For is ignored) so clients cannot spoof IPs unless you deploy
+ * behind a trusted reverse proxy and set `NUXT_RATE_LIMIT_TRUST_PROXY=1`.
+ *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
  */
+function isTruthyEnv(v: unknown): boolean {
+  if (v === true || v === 1) return true
+  if (typeof v === 'string') return v === '1' || v.toLowerCase() === 'true'
+  return false
+}
+
 export function getClientIp(event: H3Event): string {
-  const xff = getHeader(event, 'x-forwarded-for')
-  if (xff) {
-    const first = String(xff).split(',')[0]?.trim()
-    if (first) return first
+  const cfg = useRuntimeConfig(event) as { rateLimit?: { trustProxy?: boolean | string | number } }
+  const trustProxy = isTruthyEnv(cfg.rateLimit?.trustProxy)
+  if (trustProxy) {
+    const xff = getHeader(event, 'x-forwarded-for')
+    if (xff) {
+      const first = String(xff).split(',')[0]?.trim()
+      if (first) return first
+    }
   }
-  const node = (event as any).node
-  if (node?.req?.socket?.remoteAddress) return node.req.socket.remoteAddress
+  const remote = (event as NitroNodeEvent).node?.req?.socket?.remoteAddress
+  if (remote) return remote
   return 'unknown'
 }
 

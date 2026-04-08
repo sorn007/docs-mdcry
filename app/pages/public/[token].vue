@@ -4,8 +4,8 @@ definePageMeta({ layout: false })
 import { exportRenderedMarkdownToDocx } from '~/utils/exportRenderedMarkdownToDocx'
 
 type PublicInfo = {
-  scopeType: 'file' | 'folder'
-  scopeKey: string
+  scopeType?: 'file' | 'folder'
+  scopeKey?: string
   expiresAt: string | null
   requiresPassword: boolean
   allowMarkdownDownload: boolean
@@ -51,7 +51,9 @@ const downloadingMd = ref(false)
 const exportingWord = ref(false)
 
 async function loadInfo() {
-  info.value = await $fetch<PublicInfo>('/api/public/info', { query: { token: token.value } })
+  const headers: Record<string, string> = {}
+  if (passwordSubmitted.value && password.value) headers['x-public-password'] = password.value
+  info.value = await $fetch<PublicInfo>('/api/public/info', { query: { token: token.value }, headers })
   passwordNeeded.value = info.value.requiresPassword
 }
 

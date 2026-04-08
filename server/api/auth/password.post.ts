@@ -1,7 +1,7 @@
 import { readBody, createError } from 'h3'
 import { getClientIp, checkRateLimit } from '../../utils/rateLimit'
 import { prisma } from '../../utils/prisma'
-import { requireUser, hashPassword, verifyPassword } from '../../utils/auth'
+import { requireUser, hashPassword, verifyPassword, deleteOtherSessionsForUser } from '../../utils/auth'
 
 const WINDOW_MS = 60 * 60 * 1000
 const MAX_ATTEMPTS = 10
@@ -47,6 +47,8 @@ export default defineEventHandler(async (event) => {
     where: { id: user.id },
     data: { passwordHash: await hashPassword(next) }
   })
+
+  await deleteOtherSessionsForUser(event, user.id)
 
   return { ok: true }
 })

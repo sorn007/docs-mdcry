@@ -1,8 +1,9 @@
 import { readBody, createError } from 'h3'
 import { requireUser } from '../../utils/auth'
-import { validateS3Key } from '../../utils/s3Key'
+import { validateS3Key, assertKeyUnderPrefix } from '../../utils/s3Key'
 import { prisma } from '../../utils/prisma'
 import { createPublicToken, hashLinkPassword, hashToken } from '../../utils/publicLinks'
+import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {
   await requireUser(event)
@@ -17,6 +18,9 @@ export default defineEventHandler(async (event) => {
 
   if (!scopeType || !scopeKey) throw createError({ statusCode: 400, statusMessage: 'Invalid scope' })
   validateS3Key(scopeKey)
+  const config = useRuntimeConfig(event)
+  const rootPrefix = (config.docs?.rootPrefix as string) || ''
+  if (rootPrefix) assertKeyUnderPrefix(scopeKey, rootPrefix)
   if (expiresAt && Number.isNaN(expiresAt.getTime())) throw createError({ statusCode: 400, statusMessage: 'Invalid expiresAt' })
 
   const token = createPublicToken()
@@ -25,7 +29,6 @@ export default defineEventHandler(async (event) => {
   const db = prisma()
   const link = await db.publicLink.create({
     data: {
-      token,
       tokenHash,
       passwordHash: password ? await hashLinkPassword(password) : null,
       allowMarkdownDownload,

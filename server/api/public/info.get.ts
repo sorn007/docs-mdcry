@@ -1,5 +1,5 @@
-import { getQuery, createError } from 'h3'
-import { resolvePublicLinkOrThrow } from '../../utils/publicLinks'
+import { getQuery, getHeader, createError } from 'h3'
+import { resolvePublicLinkOrThrow, verifyLinkPassword } from '../../utils/publicLinks'
 
 export default defineEventHandler(async (event) => {
   const q = getQuery(event)
@@ -7,6 +7,21 @@ export default defineEventHandler(async (event) => {
   if (!token) throw createError({ statusCode: 400, statusMessage: 'Missing token' })
 
   const link = await resolvePublicLinkOrThrow(token)
+
+  if (link.passwordHash) {
+    const provided = getHeader(event, 'x-public-password')?.toString() || ''
+    if (!provided) {
+      return {
+        requiresPassword: true as const,
+        expiresAt: link.expiresAt,
+        allowMarkdownDownload: link.allowMarkdownDownload,
+        allowExportWord: link.allowExportWord
+      }
+    }
+    const ok = await verifyLinkPassword(provided, link.passwordHash)
+    if (!ok) throw createError({ statusCode: 401, statusMessage: 'Invalid password' })
+  }
+
   return {
     id: link.id,
     scopeType: link.scopeType,
