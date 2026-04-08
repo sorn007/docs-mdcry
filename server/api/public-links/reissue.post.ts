@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
   const tokenHash = hashToken(token)
   const link = await db.publicLink.create({
     data: {
+      token,
       tokenHash,
       passwordHash: prev.passwordHash,
       allowMarkdownDownload: prev.allowMarkdownDownload,
