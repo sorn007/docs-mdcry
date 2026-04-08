@@ -17,7 +17,9 @@ export default defineEventHandler(async (event) => {
       createdAt: l.createdAt,
       expiresAt: l.expiresAt,
       revokedAt: l.revokedAt,
-      requiresPassword: Boolean(l.passwordHash)
+      requiresPassword: Boolean(l.passwordHash),
+      allowMarkdownDownload: l.allowMarkdownDownload,
+      allowExportWord: l.allowExportWord
     }))
   }
 })

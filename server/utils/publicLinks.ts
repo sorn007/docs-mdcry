@@ -32,6 +32,10 @@ function normalizeFolderKey(key: string) {
   return key.endsWith('/') ? key : `${key}/`
 }
 
+export function isMarkdownObjectKey(key: string) {
+  return key.toLowerCase().endsWith('.md')
+}
+
 export function assertKeyInScope(scopeType: 'file' | 'folder', scopeKey: string, key: string) {
   if (scopeType === 'file') {
     if (key !== scopeKey) throw createError({ statusCode: 403, statusMessage: 'Key out of scope' })

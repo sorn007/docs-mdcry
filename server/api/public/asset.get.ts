@@ -1,6 +1,6 @@
 import { getQuery, sendRedirect, createError, setHeader } from 'h3'
 import { validateS3Key } from '../../utils/s3Key'
-import { assertKeyInScope, resolvePublicLinkOrThrow, requirePublicPasswordIfNeeded } from '../../utils/publicLinks'
+import { assertKeyInScope, isMarkdownObjectKey, resolvePublicLinkOrThrow, requirePublicPasswordIfNeeded } from '../../utils/publicLinks'
 import { s3SignedGetUrl } from '../../utils/s3'
 
 export default defineEventHandler(async (event) => {
@@ -13,6 +13,10 @@ export default defineEventHandler(async (event) => {
   const link = await resolvePublicLinkOrThrow(token)
   await requirePublicPasswordIfNeeded(event, link)
   assertKeyInScope(link.scopeType, link.scopeKey, key)
+
+  if (isMarkdownObjectKey(key) && !link.allowMarkdownDownload) {
+    throw createError({ statusCode: 403, statusMessage: 'Markdown download not allowed for this link' })
+  }
 
   const url = await s3SignedGetUrl(event, key, 60)
   setHeader(event, 'Cache-Control', 'public, max-age=0, must-revalidate')

@@ -20,6 +20,8 @@ export default defineEventHandler(async (event) => {
     data: {
       tokenHash,
       passwordHash: prev.passwordHash,
+      allowMarkdownDownload: prev.allowMarkdownDownload,
+      allowExportWord: prev.allowExportWord,
       scopeType: prev.scopeType,
       scopeKey: prev.scopeKey,
       expiresAt: prev.expiresAt
@@ -31,6 +33,8 @@ export default defineEventHandler(async (event) => {
     token,
     url: `/public/${encodeURIComponent(token)}`,
     requiresPassword: Boolean(link.passwordHash),
+    allowMarkdownDownload: link.allowMarkdownDownload,
+    allowExportWord: link.allowExportWord,
     expiresAt: link.expiresAt
   }
 })

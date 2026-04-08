@@ -1,17 +1,22 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+import { exportRenderedMarkdownToDocx } from '~/utils/exportRenderedMarkdownToDocx'
+
 type PublicInfo = {
   scopeType: 'file' | 'folder'
   scopeKey: string
   expiresAt: string | null
   requiresPassword: boolean
+  allowMarkdownDownload: boolean
+  allowExportWord: boolean
 }
 
 type DocTreeNode = { type: 'folder' | 'file', name: string, key: string, children?: DocTreeNode[] }
 type DocTree = { rootPrefix: string, projects: DocTreeNode[] }
 
 const route = useRoute()
+const toast = useToast()
 const token = computed(() => String(route.params.token || ''))
 const key = computed(() => typeof route.query.key === 'string' ? route.query.key : '')
 
@@ -35,6 +40,15 @@ const markdownRoot = ref<HTMLElement | null>(null)
 const { focusFromHash } = useMarkdownHashFocus(markdownRoot)
 useMermaidDiagrams(markdownRoot, html)
 const { isFocusMode, toggleFocus } = useReaderFocusLayout()
+
+const allowMarkdownDownload = computed(() => info.value?.allowMarkdownDownload === true)
+const allowExportWord = computed(() => info.value?.allowExportWord === true)
+const canDownloadMd = computed(
+  () => allowMarkdownDownload.value && docKey.value.toLowerCase().endsWith('.md')
+)
+
+const downloadingMd = ref(false)
+const exportingWord = ref(false)
 
 async function loadInfo() {
   info.value = await $fetch<PublicInfo>('/api/public/info', { query: { token: token.value } })
@@ -94,6 +108,47 @@ function openKey(k: string) {
 async function submitPassword() {
   passwordSubmitted.value = true
   await refresh()
+}
+
+async function downloadCurrentMarkdown() {
+  if (!import.meta.client || !canDownloadMd.value) return
+  downloadingMd.value = true
+  try {
+    const u = new URL('/api/public/asset', window.location.origin)
+    u.searchParams.set('token', token.value)
+    u.searchParams.set('key', docKey.value)
+    const res = await fetch(u.toString(), { headers: authHeaders(), redirect: 'follow' })
+    if (!res.ok) {
+      throw new Error(res.status === 403 ? 'ไม่อนุญาตดาวน์โหลด Markdown' : `HTTP ${res.status}`)
+    }
+    const blob = await res.blob()
+    const name = (docKey.value.split('/').pop() || 'document.md').replace(/[^\w.\u0E00-\u0E7F-]+/g, '_')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = name.endsWith('.md') ? name : `${name}.md`
+    a.rel = 'noopener'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.add({ title: 'ดาวน์โหลดแล้ว' })
+  } catch (e: any) {
+    toast.add({ title: e?.message || 'ดาวน์โหลดไม่สำเร็จ', color: 'error' })
+  } finally {
+    downloadingMd.value = false
+  }
+}
+
+async function exportCurrentWord() {
+  if (!import.meta.client || !allowExportWord.value || !markdownRoot.value || !docKey.value) return
+  exportingWord.value = true
+  try {
+    await exportRenderedMarkdownToDocx(markdownRoot.value, docKey.value)
+    toast.add({ title: 'ส่งออก Word แล้ว' })
+  } catch (e: any) {
+    toast.add({ title: e?.message || 'ส่งออก Word ไม่สำเร็จ', color: 'error' })
+  } finally {
+    exportingWord.value = false
+  }
 }
 </script>
 
@@ -168,17 +223,40 @@ async function submitPassword() {
                 <div class="font-semibold truncate">
                   {{ docKey || 'Select a file' }}
                 </div>
-                <UButton
-                  size="xs"
-                  color="neutral"
-                  variant="soft"
-                  :icon="isFocusMode ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
-                  :aria-pressed="isFocusMode"
-                  :aria-label="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
-                  :title="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
-                  class="shrink-0"
-                  @click="toggleFocus"
-                />
+                <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                  <UButton
+                    v-if="canDownloadMd"
+                    size="xs"
+                    color="neutral"
+                    variant="soft"
+                    icon="i-lucide-download"
+                    :loading="downloadingMd"
+                    @click="downloadCurrentMarkdown"
+                  >
+                    ดาวน์โหลด .md
+                  </UButton>
+                  <UButton
+                    v-if="allowExportWord && html"
+                    size="xs"
+                    color="neutral"
+                    variant="soft"
+                    icon="i-lucide-file-text"
+                    :loading="exportingWord"
+                    @click="exportCurrentWord"
+                  >
+                    Export Word
+                  </UButton>
+                  <UButton
+                    size="xs"
+                    color="neutral"
+                    variant="soft"
+                    :icon="isFocusMode ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
+                    :aria-pressed="isFocusMode"
+                    :aria-label="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
+                    :title="isFocusMode ? 'แสดงเมนูเต็ม' : 'โฟกัสเนื้อหา'"
+                    @click="toggleFocus"
+                  />
+                </div>
               </div>
             </template>
 

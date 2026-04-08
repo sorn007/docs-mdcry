@@ -12,7 +12,9 @@ export default defineEventHandler(async (event) => {
     scopeType: link.scopeType,
     scopeKey: link.scopeKey,
     expiresAt: link.expiresAt,
-    requiresPassword: Boolean(link.passwordHash)
+    requiresPassword: Boolean(link.passwordHash),
+    allowMarkdownDownload: link.allowMarkdownDownload,
+    allowExportWord: link.allowExportWord
   }
 })
 

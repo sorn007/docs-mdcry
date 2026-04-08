@@ -13,6 +13,8 @@ type PublicLinkRow = {
   expiresAt: string | null
   revokedAt: string | null
   requiresPassword: boolean
+  allowMarkdownDownload: boolean
+  allowExportWord: boolean
 }
 
 const toast = useToast()
@@ -26,7 +28,9 @@ const createForm = reactive({
   scopeType: 'file' as 'file' | 'folder',
   scopeKey: '',
   password: '',
-  expiresAt: '' as string
+  expiresAt: '' as string,
+  allowMarkdownDownload: false,
+  allowExportWord: false
 })
 
 async function refreshTree() {
@@ -68,7 +72,9 @@ async function createLink() {
         scopeType: createForm.scopeType,
         scopeKey: createForm.scopeKey,
         password: createForm.password || undefined,
-        expiresAt: createForm.expiresAt || undefined
+        expiresAt: createForm.expiresAt || undefined,
+        allowMarkdownDownload: createForm.allowMarkdownDownload,
+        allowExportWord: createForm.allowExportWord
       }
     })
     await refreshLinks()
@@ -187,6 +193,11 @@ onMounted(async () => {
             </UFormField>
           </div>
 
+          <div class="flex flex-col sm:flex-row sm:flex-wrap gap-4">
+            <UCheckbox v-model="createForm.allowMarkdownDownload" label="อนุญาตดาวน์โหลดไฟล์ Markdown (.md) จากลิงก์สาธารณะ" />
+            <UCheckbox v-model="createForm.allowExportWord" label="อนุญาต Export Word (.docx) จากหน้า public (สร้างในเบราว์เซอร์)" />
+          </div>
+
           <UButton color="primary" :loading="loading" @click="createLink">
             Generate link
           </UButton>
@@ -207,6 +218,10 @@ onMounted(async () => {
                     {{ l.requiresPassword ? 'password' : 'no password' }}
                     <span v-if="l.expiresAt"> • expires {{ l.expiresAt }}</span>
                     <span v-if="l.revokedAt"> • revoked</span>
+                  </div>
+                  <div class="text-xs text-muted mt-0.5">
+                    md download: {{ l.allowMarkdownDownload ? 'on' : 'off' }}
+                    · export Word: {{ l.allowExportWord ? 'on' : 'off' }}
                   </div>
                   <div v-if="l.url" class="text-xs mt-1 break-all text-primary">
                     {{ toAbsoluteUrl(l.url) }}

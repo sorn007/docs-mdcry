@@ -12,6 +12,8 @@ export default defineEventHandler(async (event) => {
   const scopeKey = typeof body?.scopeKey === 'string' ? body.scopeKey.trim() : ''
   const password = typeof body?.password === 'string' ? body.password : ''
   const expiresAt = body?.expiresAt ? new Date(body.expiresAt) : null
+  const allowMarkdownDownload = body?.allowMarkdownDownload === true
+  const allowExportWord = body?.allowExportWord === true
 
   if (!scopeType || !scopeKey) throw createError({ statusCode: 400, statusMessage: 'Invalid scope' })
   validateS3Key(scopeKey)
@@ -26,6 +28,8 @@ export default defineEventHandler(async (event) => {
       token,
       tokenHash,
       passwordHash: password ? await hashLinkPassword(password) : null,
+      allowMarkdownDownload,
+      allowExportWord,
       scopeType,
       scopeKey,
       expiresAt: expiresAt || null
@@ -37,6 +41,8 @@ export default defineEventHandler(async (event) => {
     token,
     url: `/public/${encodeURIComponent(token)}`,
     requiresPassword: Boolean(link.passwordHash),
+    allowMarkdownDownload: link.allowMarkdownDownload,
+    allowExportWord: link.allowExportWord,
     expiresAt: link.expiresAt
   }
 })
