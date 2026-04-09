@@ -1,5 +1,5 @@
 import { getQuery, getHeader, createError } from 'h3'
-import { resolvePublicLinkOrThrow, verifyLinkPassword } from '../../utils/publicLinks'
+import { resolvePublicLinkOrThrow, requirePublicPasswordIfNeeded } from '../../utils/publicLinks'
 
 export default defineEventHandler(async (event) => {
   const q = getQuery(event)
@@ -18,8 +18,7 @@ export default defineEventHandler(async (event) => {
         allowExportWord: link.allowExportWord
       }
     }
-    const ok = await verifyLinkPassword(provided, link.passwordHash)
-    if (!ok) throw createError({ statusCode: 401, statusMessage: 'Invalid password' })
+    await requirePublicPasswordIfNeeded(event, link)
   }
 
   return {

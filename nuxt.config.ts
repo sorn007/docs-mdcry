@@ -8,11 +8,12 @@ const securityHeaders: Record<string, string> = {
   // Nuxt/Vue need inline scripts; tighten further if you add nonces.
   'content-security-policy': [
     'default-src \'self\'',
-    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'',
+    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://challenges.cloudflare.com',
     'style-src \'self\' \'unsafe-inline\'',
     'img-src \'self\' data: https: blob:',
     'font-src \'self\' data:',
-    'connect-src \'self\'',
+    'connect-src \'self\' https://challenges.cloudflare.com',
+    'frame-src https://challenges.cloudflare.com',
     'frame-ancestors \'none\'',
     'base-uri \'self\'',
     'form-action \'self\''
@@ -36,6 +37,9 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
+    public: {
+      turnstileSiteKey: ''
+    },
     auth: {
       sessionTtlSeconds: 60 * 60 * 24 * 14
     },
@@ -44,6 +48,10 @@ export default defineNuxtConfig({
     },
     rateLimit: {
       trustProxy: false
+    },
+    turnstile: {
+      secretKey: '',
+      enabled: false
     },
     s3: {
       endpoint: '',

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { createError, getHeader } from 'h3'
 import type { H3Event } from 'h3'
 import { prisma } from './prisma'
+import { verifyTurnstileOrThrow } from './turnstile'
 
 function sha256(input: string) {
   return createHash('sha256').update(input).digest('hex')
@@ -63,6 +64,8 @@ export async function requirePublicPasswordIfNeeded(event: H3Event, link: { pass
   if (!link.passwordHash) return
   const provided = getHeader(event, 'x-public-password')?.toString() || ''
   if (!provided) throw createError({ statusCode: 401, statusMessage: 'Password required' })
+  const turnstileToken = getHeader(event, 'x-turnstile-token')?.toString() || ''
+  await verifyTurnstileOrThrow(event, turnstileToken)
   const ok = await verifyLinkPassword(provided, link.passwordHash)
   if (!ok) throw createError({ statusCode: 401, statusMessage: 'Invalid password' })
 }

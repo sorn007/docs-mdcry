@@ -12,8 +12,8 @@ export function useAuth() {
     return res.user
   }
 
-  async function login(username: string, password: string) {
-    await $fetch('/api/auth/login', { method: 'POST', body: { username, password } })
+  async function login(username: string, password: string, turnstileToken?: string) {
+    await $fetch('/api/auth/login', { method: 'POST', body: { username, password, turnstileToken } })
     await refresh()
   }
 

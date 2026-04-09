@@ -17,16 +17,46 @@ type DocTree = { rootPrefix: string, projects: DocTreeNode[] }
 
 const route = useRoute()
 const toast = useToast()
+const config = useRuntimeConfig()
+const turnstileSiteKey = config.public?.turnstileSiteKey || ''
+const turnstileEnabled = Boolean(turnstileSiteKey)
 const token = computed(() => String(route.params.token || ''))
 const key = computed(() => typeof route.query.key === 'string' ? route.query.key : '')
 
 const password = ref('')
 const passwordNeeded = ref(false)
 const passwordSubmitted = ref(false)
+const publicTurnstileToken = ref('')
+
+declare global {
+  interface Window {
+    onPublicTurnstileSuccess?: (token: string) => void
+    onPublicTurnstileExpired?: () => void
+  }
+}
+
+if (import.meta.client && turnstileEnabled) {
+  useHead({
+    script: [
+      { src: 'https://challenges.cloudflare.com/turnstile/v0/api.js', async: true, defer: true }
+    ]
+  })
+}
+
+onMounted(() => {
+  if (!import.meta.client || !turnstileEnabled) return
+  window.onPublicTurnstileSuccess = (token: string) => {
+    publicTurnstileToken.value = token
+  }
+  window.onPublicTurnstileExpired = () => {
+    publicTurnstileToken.value = ''
+  }
+})
 
 function authHeaders() {
   const headers: Record<string, string> = {}
   if (passwordSubmitted.value && password.value) headers['x-public-password'] = password.value
+  if (turnstileEnabled && publicTurnstileToken.value) headers['x-turnstile-token'] = publicTurnstileToken.value
   return headers
 }
 
@@ -101,6 +131,7 @@ watch(() => [token.value, key.value], () => refresh(), { immediate: true })
 watch(() => token.value, () => {
   passwordSubmitted.value = false
   password.value = ''
+  publicTurnstileToken.value = ''
 })
 
 function openKey(k: string) {
@@ -108,6 +139,10 @@ function openKey(k: string) {
 }
 
 async function submitPassword() {
+  if (turnstileEnabled && !publicTurnstileToken.value) {
+    toast.add({ title: 'Please complete Turnstile verification first', color: 'warning' })
+    return
+  }
   passwordSubmitted.value = true
   await refresh()
 }
@@ -178,6 +213,13 @@ async function exportCurrentWord() {
           </template>
           <div class="space-y-3">
             <UInput v-model="password" type="password" placeholder="Enter password" />
+            <div
+              v-if="turnstileEnabled"
+              class="cf-turnstile"
+              :data-sitekey="turnstileSiteKey"
+              data-callback="onPublicTurnstileSuccess"
+              data-expired-callback="onPublicTurnstileExpired"
+            />
             <UButton :loading="loading" @click="submitPassword">
               Continue
             </UButton>

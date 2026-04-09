@@ -2,6 +2,7 @@ import { readBody, createError } from 'h3'
 import { getClientIp, checkRateLimit } from '../../utils/rateLimit'
 import { prisma } from '../../utils/prisma'
 import { createSessionForUser, verifyPassword } from '../../utils/auth'
+import { verifyTurnstileOrThrow } from '../../utils/turnstile'
 
 const LOGIN_WINDOW_MS = 60 * 1000
 const LOGIN_MAX_ATTEMPTS = 5
@@ -13,7 +14,11 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event).catch(() => ({}))
   const username = typeof body?.username === 'string' ? body.username.trim() : ''
   const password = typeof body?.password === 'string' ? body.password : ''
+  const turnstileToken = typeof body?.turnstileToken === 'string'
+    ? body.turnstileToken
+    : (typeof body?.['cf-turnstile-response'] === 'string' ? body['cf-turnstile-response'] : '')
   if (!username || !password.trim()) throw createError({ statusCode: 400, statusMessage: 'Missing credentials' })
+  await verifyTurnstileOrThrow(event, turnstileToken)
 
   const db = prisma()
   const user = await db.user.findUnique({ where: { username } })
