@@ -4,7 +4,7 @@
 
 /** ขั้นต่ำตอนซูมด้วยล้อ/ปุ่ม — ต่ำพอให้ scale หลัง fit (อาจ < 0.25) ไม่กระโดดเมื่อกดย่อ */
 const MIN_SCALE = 0.05
-const MAX_SCALE = 4
+const MAX_SCALE = 64
 const ZOOM_STEP = 0.15
 
 /** ระยะห่างจากขอบ viewport ตอนคำนวณ fit (ทุกด้าน) */
