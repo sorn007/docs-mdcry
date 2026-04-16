@@ -1,79 +1,106 @@
-# Nuxt Starter Template
+# docs-mdcry
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+`docs-mdcry` is a private Markdown documentation viewer/editor built with Nuxt 4, Prisma, PostgreSQL, and S3-compatible object storage.
+It supports authenticated access, document tree browsing, rendered Markdown reading, and public link sharing with controls.
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+## Tech Stack
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+- Nuxt 4 + Vue 3 + Nuxt UI
+- Prisma ORM + PostgreSQL
+- S3-compatible object storage (AWS S3, R2, MinIO, etc.)
+- TypeScript + ESLint
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+## Features
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+- Secure login with optional Cloudflare Turnstile protection
+- Document tree and Markdown rendering
+- Public links for documents with revoke/reissue controls
+- Optional export/download policies for public content
+- Configurable rate limiting and proxy-aware IP handling
 
-## Quick Start
+## Prerequisites
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
-```
+- Node.js 20+
+- npm 11+
+- PostgreSQL 14+
+- S3-compatible bucket and credentials
 
-## Deploy your own
+## Local Setup
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
-
-## Setup
-
-Make sure to install the dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-## Development Server
+2. Create environment file:
 
-Start the development server on `http://localhost:3000`:
+```bash
+cp .env.example .env
+```
+
+3. Update required values in `.env`:
+
+- `DATABASE_URL`
+- `NUXT_S3_ENDPOINT`
+- `NUXT_S3_REGION`
+- `NUXT_S3_ACCESS_KEY_ID`
+- `NUXT_S3_SECRET_ACCESS_KEY`
+- `NUXT_S3_BUCKET`
+
+4. Run database migration:
+
+```bash
+npm run db:migrate
+```
+
+5. (Optional) Seed admin account:
+
+```bash
+npm run db:seed
+```
+
+6. Start development server:
 
 ```bash
 npm run dev
 ```
 
-## Deploy (Docker Compose)
+App runs on `http://localhost:3000`.
 
-1) Create `.env` from `.env.example` and fill required values.
+## Scripts
 
-2) Create a `.env.deploy` file (or export env vars) for image reference:
+- `npm run dev` - Start dev server
+- `npm run build` - Build production bundle
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run typecheck` - Run TypeScript checks
+- `npm run db:migrate` - Apply Prisma migrations
+- `npm run db:seed` - Seed admin user
+
+## Docker Compose Deployment
+
+1. Prepare `.env` from `.env.example`.
+2. Create `.env.deploy` (or export variables) with image settings:
 
 ```bash
 GHCR_IMAGE=ghcr.io/<owner>/<repo>
 GHCR_TAG=latest
 ```
 
-3) Start:
+3. Start services:
 
 ```bash
 docker compose --env-file .env.deploy up -d
 ```
 
-4) Open `http://localhost:3000` (or your server IP).
+## Security Notes for Public Repositories
 
-## Production
+- Never commit `.env` or any real credentials.
+- Keep `.env.example` sanitized with placeholder values only.
+- Rotate credentials before/after making a repository public if secrets were ever exposed.
+- Review public link policies before enabling external sharing.
 
-Build the application for production:
+## License
 
-```bash
-npm run build
-```
-
-Locally preview production build:
-
-```bash
-npm run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+This project is licensed under the MIT License. See `LICENSE`.
