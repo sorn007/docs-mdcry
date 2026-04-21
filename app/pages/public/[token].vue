@@ -53,6 +53,13 @@ onMounted(() => {
   }
 })
 
+function syncTurnstileTokenFromDom() {
+  if (!import.meta.client || !turnstileEnabled || publicTurnstileToken.value) return
+  const input = document.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]')
+  const domToken = input?.value?.trim() || ''
+  if (domToken) publicTurnstileToken.value = domToken
+}
+
 function authHeaders() {
   const headers: Record<string, string> = {}
   if (passwordSubmitted.value && password.value) headers['x-public-password'] = password.value
@@ -75,6 +82,9 @@ const allowMarkdownDownload = computed(() => info.value?.allowMarkdownDownload =
 const allowExportWord = computed(() => info.value?.allowExportWord === true)
 const canDownloadMd = computed(
   () => allowMarkdownDownload.value && docKey.value.toLowerCase().endsWith('.md')
+)
+const canSubmitPassword = computed(
+  () => password.value.trim().length > 0 && (!turnstileEnabled || Boolean(publicTurnstileToken.value))
 )
 
 const downloadingMd = ref(false)
@@ -139,6 +149,7 @@ function openKey(k: string) {
 }
 
 async function submitPassword() {
+  syncTurnstileTokenFromDom()
   if (turnstileEnabled && !publicTurnstileToken.value) {
     toast.add({ title: 'Please complete Turnstile verification first', color: 'warning' })
     return
@@ -220,7 +231,7 @@ async function exportCurrentWord() {
               data-callback="onPublicTurnstileSuccess"
               data-expired-callback="onPublicTurnstileExpired"
             />
-            <UButton :loading="loading" @click="submitPassword">
+            <UButton :loading="loading" :disabled="!canSubmitPassword" @click="submitPassword">
               Continue
             </UButton>
           </div>
