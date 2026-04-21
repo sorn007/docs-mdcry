@@ -10,10 +10,32 @@ type TurnstileSiteverifyResponse = {
   'error-codes'?: string[]
 }
 
+const VERIFIED_TOKEN_TTL_MS = 4 * 60 * 1000
+const verifiedTokenCache = new Map<string, number>()
+
 function isTruthy(v: unknown): boolean {
   if (v === true || v === 1) return true
   if (typeof v === 'string') return v === '1' || v.toLowerCase() === 'true'
   return false
+}
+
+function makeCacheKey(token: string, ip: string) {
+  return `${token}::${ip || 'unknown'}`
+}
+
+function isTokenRecentlyVerified(token: string, ip: string) {
+  const now = Date.now()
+  for (const [k, exp] of verifiedTokenCache) {
+    if (exp <= now) verifiedTokenCache.delete(k)
+  }
+  const key = makeCacheKey(token, ip)
+  const exp = verifiedTokenCache.get(key) || 0
+  return exp > now
+}
+
+function rememberVerifiedToken(token: string, ip: string) {
+  const key = makeCacheKey(token, ip)
+  verifiedTokenCache.set(key, Date.now() + VERIFIED_TOKEN_TTL_MS)
 }
 
 export async function verifyTurnstileOrThrow(event: H3Event, token: string) {
@@ -30,11 +52,13 @@ export async function verifyTurnstileOrThrow(event: H3Event, token: string) {
   if (!token?.trim()) {
     throw createError({ statusCode: 400, statusMessage: 'Turnstile token is required' })
   }
+  const normalizedToken = token.trim()
+  const ip = getClientIp(event)
+  if (isTokenRecentlyVerified(normalizedToken, ip)) return
 
   const body = new URLSearchParams()
   body.set('secret', secret)
-  body.set('response', token.trim())
-  const ip = getClientIp(event)
+  body.set('response', normalizedToken)
   if (ip && ip !== 'unknown') body.set('remoteip', ip)
 
   const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -55,4 +79,5 @@ export async function verifyTurnstileOrThrow(event: H3Event, token: string) {
       data: { errors: json['error-codes'] || [] }
     })
   }
+  rememberVerifiedToken(normalizedToken, ip)
 }
