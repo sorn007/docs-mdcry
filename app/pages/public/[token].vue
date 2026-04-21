@@ -104,9 +104,10 @@ const downloadingMd = ref(false)
 const exportingWord = ref(false)
 
 async function loadInfo() {
-  const headers: Record<string, string> = {}
-  if (passwordSubmitted.value && password.value) headers['x-public-password'] = password.value
-  info.value = await $fetch<PublicInfo>('/api/public/info', { query: { token: token.value }, headers })
+  info.value = await $fetch<PublicInfo>('/api/public/info', {
+    query: { token: token.value },
+    headers: authHeaders()
+  })
   passwordNeeded.value = info.value.requiresPassword
 }
 
