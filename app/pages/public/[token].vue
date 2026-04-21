@@ -27,6 +27,7 @@ const password = ref('')
 const passwordNeeded = ref(false)
 const passwordSubmitted = ref(false)
 const publicTurnstileToken = ref('')
+let turnstileSyncTimer: ReturnType<typeof setInterval> | null = null
 
 declare global {
   interface Window {
@@ -50,6 +51,18 @@ onMounted(() => {
   }
   window.onPublicTurnstileExpired = () => {
     publicTurnstileToken.value = ''
+  }
+  // Some environments don't trigger the callback reliably.
+  // Keep syncing from the hidden input so the Continue button can unlock.
+  turnstileSyncTimer = setInterval(() => {
+    syncTurnstileTokenFromDom()
+  }, 400)
+})
+
+onBeforeUnmount(() => {
+  if (turnstileSyncTimer) {
+    clearInterval(turnstileSyncTimer)
+    turnstileSyncTimer = null
   }
 })
 
@@ -234,6 +247,9 @@ async function exportCurrentWord() {
             <UButton :loading="loading" :disabled="!canSubmitPassword" @click="submitPassword">
               Continue
             </UButton>
+            <p v-if="turnstileEnabled && !publicTurnstileToken" class="text-xs text-muted">
+              Complete Turnstile verification to continue.
+            </p>
           </div>
         </UCard>
 
