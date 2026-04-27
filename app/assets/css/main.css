@@ -18,6 +18,23 @@
 }
 
 @layer base {
+  .reader-sidebar-scroll {
+    min-height: 0;
+  }
+  @media (min-width: 1024px) {
+    .reader-sidebar-card--locked {
+      position: sticky;
+      top: calc(var(--ui-header-height, 4rem) + 1rem);
+      max-height: calc(100dvh - var(--ui-header-height, 4rem) - 2rem);
+      overflow: hidden;
+    }
+    .reader-sidebar-card--locked .reader-sidebar-scroll {
+      max-height: calc(100dvh - var(--ui-header-height, 4rem) - 8.5rem);
+      overflow: auto;
+      padding-right: 0.25rem;
+    }
+  }
+
   .md h1 { font-size: 1.75rem; font-weight: 700; margin: 1.25rem 0 0.75rem; }
   .md h2 { font-size: 1.375rem; font-weight: 700; margin: 1.25rem 0 0.5rem; }
   .md h3 { font-size: 1.125rem; font-weight: 600; margin: 1rem 0 0.5rem; }

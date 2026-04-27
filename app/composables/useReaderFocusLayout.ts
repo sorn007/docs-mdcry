@@ -1,34 +1,41 @@
 import { onMounted, ref, watch } from 'vue'
 
-const STORAGE_KEY = 'docs-mdcry-reader-focus'
+const FOCUS_STORAGE_KEY = 'docs-mdcry-reader-focus'
+const SIDEBAR_LOCK_STORAGE_KEY = 'docs-mdcry-sidebar-lock'
 
 export function useReaderFocusLayout() {
   const isFocusMode = ref(false)
+  const isSidebarLocked = ref(false)
 
-  function readStored(): boolean {
+  function readStored(key: string): boolean {
     if (!import.meta.client) return false
     try {
-      return localStorage.getItem(STORAGE_KEY) === '1'
+      return localStorage.getItem(key) === '1'
     } catch {
       return false
     }
   }
 
-  function persist(value: boolean) {
+  function persist(key: string, value: boolean) {
     if (!import.meta.client) return
     try {
-      localStorage.setItem(STORAGE_KEY, value ? '1' : '0')
+      localStorage.setItem(key, value ? '1' : '0')
     } catch {
       /* ignore */
     }
   }
 
   onMounted(() => {
-    isFocusMode.value = readStored()
+    isFocusMode.value = readStored(FOCUS_STORAGE_KEY)
+    isSidebarLocked.value = readStored(SIDEBAR_LOCK_STORAGE_KEY)
   })
 
   watch(isFocusMode, (v) => {
-    persist(v)
+    persist(FOCUS_STORAGE_KEY, v)
+  })
+
+  watch(isSidebarLocked, (v) => {
+    persist(SIDEBAR_LOCK_STORAGE_KEY, v)
   })
 
   function setFocus(on: boolean) {
@@ -39,5 +46,20 @@ export function useReaderFocusLayout() {
     isFocusMode.value = !isFocusMode.value
   }
 
-  return { isFocusMode, setFocus, toggleFocus }
+  function setSidebarLock(on: boolean) {
+    isSidebarLocked.value = on
+  }
+
+  function toggleSidebarLock() {
+    isSidebarLocked.value = !isSidebarLocked.value
+  }
+
+  return {
+    isFocusMode,
+    isSidebarLocked,
+    setFocus,
+    toggleFocus,
+    setSidebarLock,
+    toggleSidebarLock
+  }
 }

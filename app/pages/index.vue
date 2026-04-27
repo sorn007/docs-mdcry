@@ -16,7 +16,12 @@ const search = ref('')
 const markdownRoot = ref<HTMLElement | null>(null)
 const { focusFromHash } = useMarkdownHashFocus(markdownRoot)
 useMermaidDiagrams(markdownRoot, html)
-const { isFocusMode, toggleFocus } = useReaderFocusLayout()
+const { isFocusMode, isSidebarLocked, toggleFocus, toggleSidebarLock } = useReaderFocusLayout()
+
+const sidebarCardClass = computed(() => ([
+  isFocusMode.value ? 'lg:col-span-3' : 'lg:col-span-4',
+  isSidebarLocked.value ? 'reader-sidebar-card--locked' : ''
+]))
 
 async function fetchTree() {
   loadingTree.value = true
@@ -74,46 +79,60 @@ onMounted(fetchTree)
 <template>
   <UContainer class="py-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <UCard :class="isFocusMode ? 'lg:col-span-3' : 'lg:col-span-4'">
+      <UCard :class="sidebarCardClass">
         <template #header>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <div class="font-semibold">Projects</div>
-              <UButton size="xs" variant="soft" color="neutral" :loading="loadingTree" @click="fetchTree">
-                Refresh
-              </UButton>
+              <div class="flex items-center gap-1.5">
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="soft"
+                  :icon="isSidebarLocked ? 'i-lucide-lock' : 'i-lucide-lock-open'"
+                  :aria-pressed="isSidebarLocked"
+                  :aria-label="isSidebarLocked ? 'ปลดล็อกเมนูด้านซ้าย' : 'ล็อกเมนูด้านซ้ายให้อยู่กับที่'"
+                  :title="isSidebarLocked ? 'ปลดล็อกเมนูด้านซ้าย' : 'ล็อกเมนูด้านซ้ายให้อยู่กับที่'"
+                  @click="toggleSidebarLock"
+                />
+                <UButton size="xs" variant="soft" color="neutral" :loading="loadingTree" @click="fetchTree">
+                  Refresh
+                </UButton>
+              </div>
             </div>
             <UInput v-model="search" placeholder="Search files…" />
           </div>
         </template>
 
-        <div v-if="searchResults.length" class="space-y-1">
-          <div class="text-xs text-muted mb-2">Search results</div>
-          <UButton
-            v-for="f in searchResults"
-            :key="f.key"
-            variant="ghost"
-            color="neutral"
-            class="w-full justify-start"
-            :disabled="f.key === docKey"
-            @click="openKey(f.key)"
-          >
-            {{ f.name }}
-          </UButton>
-          <USeparator class="my-3" />
-        </div>
+        <div class="reader-sidebar-scroll space-y-2">
+          <div v-if="searchResults.length" class="space-y-1">
+            <div class="text-xs text-muted mb-2">Search results</div>
+            <UButton
+              v-for="f in searchResults"
+              :key="f.key"
+              variant="ghost"
+              color="neutral"
+              class="w-full justify-start"
+              :disabled="f.key === docKey"
+              @click="openKey(f.key)"
+            >
+              {{ f.name }}
+            </UButton>
+            <USeparator class="my-3" />
+          </div>
 
-        <div v-if="tree?.projects?.length" class="space-y-2">
-          <DocTree
-            v-for="project in tree.projects"
-            :key="project.key"
-            :node="project"
-            :active-key="docKey"
-            @open="openKey"
-          />
-        </div>
-        <div v-else class="text-sm text-muted">
-          Configure S3 env vars and click <span class="font-medium">Rescan now</span> in Admin.
+          <div v-if="tree?.projects?.length" class="space-y-2">
+            <DocTree
+              v-for="project in tree.projects"
+              :key="project.key"
+              :node="project"
+              :active-key="docKey"
+              @open="openKey"
+            />
+          </div>
+          <div v-else class="text-sm text-muted">
+            Configure S3 env vars and click <span class="font-medium">Rescan now</span> in Admin.
+          </div>
         </div>
       </UCard>
 
